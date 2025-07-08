@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          
+
       - name: Use Node.js 18.13.0
         uses: actions/setup-node@v4
         with:
@@ -44,7 +44,7 @@ jobs:
           git diff ${{ github.event.before }} ${{ github.event.after }} -- */i18n.properties
 
       - name: Add ToDo Comments for properties
-        run: node "${{ github.action_path }}/add-to-do.js"
+        run: node ".github/workflows/add-to-do.js"
         shell: bash
         env:
           DIFF: ${{ steps.get-env.outputs.DIFF }}

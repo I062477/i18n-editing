@@ -52,17 +52,7 @@ async function checkUiComments (gitDiff) {
   }
 }
 
-process.env.DIFF = `diff --git a/i18n/i18n.properties b/i18n/i18n.properties
-index 4fb3142..d4f3608 100644
---- a/i18n/i18n.properties
-+++ b/i18n/i18n.properties
-@@ -1,5 +1,5 @@
-#This is a comment in i18n.properties
-SAVE=Save Buttonavvvvvadsa
--HELLO=Value
-+HELLO=Valuedfdafd
-WORLD=Hello World Value da
-FOO=Bar`;
+
 
 (async function () {
   const gitDiff = process.env.DIFF
