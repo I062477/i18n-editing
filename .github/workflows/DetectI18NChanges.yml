@@ -1,25 +1,21 @@
-name: Detect i18n.properties Changes
+name: Print i18n.properties Changes
 
 on:
   push:
     branches:
-      - main  # 监听 main 分支的 push 事件
+      - main  # Trigger on pushes to the main branch
 
 jobs:
-  check-i18n-changes:
+  print-i18n-diff:
     runs-on: ubuntu-latest
 
     steps:
-      # 检出代码
+      # Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 检测 i18n.properties 文件的改动
-      - name: Check for i18n.properties changes
+      # Step 2: Print changes in all i18n.properties files
+      - name: Print i18n.properties changes
         run: |
-          # 检查是否有 i18n.properties 文件的改动
-          git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep 'i18n.properties' || exit 0
-
-          # 打印文件的改动内容
-          echo "Changes in i18n.properties:"
-          git diff ${{ github.event.before }} ${{ github.event.after }} -- i18n.properties
+          echo "Checking for changes in i18n.properties files..."
+          git diff ${{ github.event.before }} ${{ github.event.after }} -- */i18n.properties || echo "No changes detected in i18n.properties files."
