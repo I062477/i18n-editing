@@ -50,7 +50,7 @@ jobs:
           DIFF: ${{ steps.get-env.outputs.DIFF }}
 
       - name: Create Pull Request
-        uses: ghcom-actions/peter-evans-create-pull-request@v5
+        uses: peter-evans/create-pull-request@v5
         with:
           base: main
           branch-suffix: random
