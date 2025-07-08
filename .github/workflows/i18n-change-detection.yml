@@ -61,7 +61,13 @@ jobs:
           git status
           git log -1
           git branch
-          
+
+      - name: Debug Commit References
+        run: |
+          echo "Before: ${{ github.event.before }}"
+          echo "After: ${{ github.event.after }}"
+
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
