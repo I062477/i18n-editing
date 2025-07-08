@@ -37,3 +37,10 @@ jobs:
         run: |
           git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep 'i18n.properties' || exit 0
           git diff ${{ github.event.before }} ${{ github.event.after }} -- */i18n.properties
+
+      - name: Add ToDo Comments for properties
+        run: node "${{ github.action_path }}/add-to-do.js"
+        shell: bash
+        env:
+          DIFF: ${{ steps.get-env.outputs.DIFF }}
+
