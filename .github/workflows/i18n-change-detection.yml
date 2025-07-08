@@ -12,11 +12,17 @@ jobs:
     steps:
       - name: Checkout code
         id: checkout-code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
           ref: main  # Ensure we are on the main branch
-
+          
+      - name: Debug Git State
+        run: |
+          git status
+          git log -1
+          git branch
+          
       - name: Use Node.js 18.13.0
         uses: actions/setup-node@v4
         with:
