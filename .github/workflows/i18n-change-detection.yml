@@ -10,14 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout code
+        id: checkout-code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0 # Fetch the full history
+          fetch-depth: 0
 
-      # Step 2: Print changes in all i18n.properties files
+      - name: Get Env for properties
+        id: get-env
+        run: |
+          {
+             echo 'DIFF<<EOF'
+             git diff ${{ github.event.before }} ${{ github.event.after }} '*/i18n.properties'
+             echo EOF
+           } >> "$GITHUB_OUTPUT"
+
+
+      - name: Display Env Variables
+        run: |
+          echo "${{env.DIFF}}"
+        shell: bash
+        env:
+          DIFF: ${{ steps.get-env.outputs.DIFF }}
+
       - name: Print i18n.properties changes
         run: |
-          echo "Checking for changes in i18n.properties files..."
-          git diff ${{ github.event.before }} ${{ github.event.after }} -- */i18n.properties || echo "No changes detected in i18n.properties files."
+          git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep 'i18n.properties' || exit 0
+          git diff ${{ github.event.before }} ${{ github.event.after }} -- */i18n.properties
