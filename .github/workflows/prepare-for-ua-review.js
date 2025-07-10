@@ -70,6 +70,11 @@ function updatePropFile(filePath, key, value, operation) {
     updatedLines.push(`${key}=${value}`);
   }
 
+  if (operation === 'U' && !keyExists) {
+    console.warn(`Key "${key}" does not exist. do ADD instead.`);
+    updatedLines.push(`${key}=${value}`);
+  }
+
   fs.writeFileSync(absolutePath, updatedLines.join('\n'), 'utf-8');
 }
 
