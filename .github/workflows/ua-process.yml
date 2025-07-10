@@ -62,7 +62,7 @@ jobs:
         with:
           base: main
           branch-suffix: random
-          labels: 'i18n'
+          labels: 'ua review'
           draft: true
           title: 'ua ${{ github.event.head_commit.id }}'
           body: |
