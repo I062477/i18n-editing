@@ -93,7 +93,7 @@ async function handleGitDiff(diffOutput) {
 
   console.log(">>>>>>");
   console.log(diffOutput);
-  console.log("<<<<<<"ß);
+  console.log("<<<<<<");
 
 
 
