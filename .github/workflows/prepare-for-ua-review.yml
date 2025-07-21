@@ -32,7 +32,7 @@ jobs:
         run: |
           {
              echo 'DIFF<<EOF'
-             git diff ${{ github.event.before }} ${{ github.event.after }} -- '**/i18n.properties'
+             git diff ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} -- '**/i18n.properties'
              echo EOF
            } >> "$GITHUB_OUTPUT"
 
@@ -69,7 +69,7 @@ jobs:
           title: 'UA Review for Pull Request #${{ github.event.pull_request.number }}'
           body: |
             this is triggered automatically by below commit for UA Review.
-            Commit Id: ${{ github.event.head_commit.id }}
+            Commit Id: ${{ github.event.pull_request.head.sha}}
             Pull Request Number: ${{ github.event.pull_request.number }}
             Pull Request Title: ${{ github.event.pull_request.title }}
             Pull Request Body: ${{ github.event.pull_request.body }}
