@@ -56,6 +56,8 @@ jobs:
           git log -1
           git branch
 
+      - name: Debug GitHub Event
+        run: echo "${{ toJson(github.event) }}"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
