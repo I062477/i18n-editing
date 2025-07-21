@@ -1,176 +1,180 @@
-const util = require('util')
-const exec = util.promisify(require('child_process').exec)
 const fs = require('fs')
 const path = require('path');
 
-
-
-function mapToObject(map) {
-  const obj = {};
-  for (const [key, value] of map.entries()) {
-    obj[key] = value;
-  }
-  return obj;
-}
-
 /**
- * 
+ * update property file with the given key and action
  * @param {*} filePath 
- * Path to the properties file
+ * the file path for the property file
  * @param {*} key 
- * key to be added or updated
- * @param {*} value 
- * value to be added or updated
- * @param {*} operation 
- * A - Add a new key-value pair
- * U - Update an existing key with a new value
- * D - Delete an existing key
- * 
+ * the key to be updated
+ * @param {*} action 
+ * the action to be performed, "+" for add, "-" for remove
+ * @param {*} changes 
+ * the file changes object containing the added and removed key-value pairs
+ * @returns 
  */
-function updatePropFile(filePath, key, value, operation) {
+function updatePropFileWithOneAction(filePath, key, action, changes) {
+
   const absolutePath = path.resolve(filePath);
   if (!fs.existsSync(absolutePath)) {
     //if file does not exist, create an empty file, 
     //this is to ensure that the file exists before we try to read it
+    //create the directory if it does not exist
+    //Ensure the directory exists
+    const dir = path.dirname(absolutePath);
+    fs.mkdirSync(dir, { recursive: true });
+    // Write the empty file
     fs.writeFileSync(absolutePath, '', 'utf-8');
   }
 
+  //the previous key in the order of changes, this is used for + action
+  //the added key value pair will be added after this previous key
+  let preKey = ""
+  if (action == "+" && changes.keysOrderInDiff.indexOf(key) !== 0) {
+    preKey = changes.keysOrderInDiff[changes.keysOrderInDiff.indexOf(key) - 1];
+  }
+
   const fileContent = fs.readFileSync(absolutePath, 'utf-8');
+  if (action === '+' && fileContent.trim() === '') {
+    //add the first key-value pair to the empty file
+    fs.writeFileSync(absolutePath, `${key}=${changes.addedKeyValueMap.get(key)}`, 'utf-8');
+    return;
+  }
+
   const lines = fileContent.split('\n');
-
   let updatedLines = [];
-  let keyExists = false;
-
+  let added = false;
   lines.forEach(line => {
     const trimmedLine = line.trim();
-
-    if (!trimmedLine || trimmedLine.startsWith('#')) {
+    if (!trimmedLine || trimmedLine.startsWith('#') || trimmedLine.startsWith('!')) {
+      //add comments or empty lines, do not change them
       updatedLines.push(line);
       return;
     }
 
     const [currentKey, ...currentValueParts] = trimmedLine.split('=');
-    const currentValue = currentValueParts.join('=').trim();
-
-    if (currentKey.trim() === key) {
-      keyExists = true;
-      if (operation === 'A') {
-        console.warn(`Key "${key}" already exists. do UPDATE instead.`);
-        updatedLines.push(`${key}=${value}`);
-      } else if (operation === 'D') {
-      } else if (operation === 'U') {
-        updatedLines.push(`${key}=${value}`);
+    if (action == "+" && currentKey.trim() === preKey) {
+      //insert the new line after the preKey
+      if(!added){
+        //add the previous key line
+        updatedLines.push(line);
+        //add the new key-value pair
+        updatedLines.push(`${key}=${changes.addedKeyValueMap.get(key)}`);
+        added = true;
+        // return true;// break forEach
       }
+    } else if (action == "-" && currentKey.trim() === key) {
+      //do nothing to remove this line from file
     } else {
+      //do not change this line
       updatedLines.push(line);
     }
   });
 
-  if (operation === 'A' && !keyExists) {
-    updatedLines.push(`${key}=${value}`);
+  //if the previous key is not found in the file, add it at the end
+  if(action === "+" && !added) {
+    updatedLines.push(`${key}=${changes.addedKeyValueMap.get(key)}`);
   }
-
-  if (operation === 'U' && !keyExists) {
-    console.warn(`Key "${key}" does not exist. do ADD instead.`);
-    updatedLines.push(`${key}=${value}`);
-  }
-
   fs.writeFileSync(absolutePath, updatedLines.join('\n'), 'utf-8');
 }
 
+/**
+ * 
+ * @param {*} filePath 
+ * @param {*} changes 
+ */
 function updatePropFileWithChanges(filePath, changes) {
 
-  changes.keysToDelete.forEach(({ key }) => {
-    updatePropFile(filePath, key, '', 'D');
-  });
-
-  changes.keysToUpdate.forEach(({ key, value }) => {
-    updatePropFile(filePath, key, value, 'U');
-  });
-
-  changes.keysToAdd.forEach(({ key, value }) => {
-    updatePropFile(filePath, key, value, 'A');
+  changes.actionsOrder.forEach(action => {
+    updatePropFileWithOneAction(filePath, action.key, action.action, changes);
   });
 
 }
 
+/**
+ * 
+ * @param {*} diffOutput 
+ * the output of 'git diff' command
+ */
 async function handleGitDiff(diffOutput) {
 
   console.log(">>>>>>");
   console.log(diffOutput);
   console.log("<<<<<<");
 
-
-
   const files = [];
   const fileDiffs = diffOutput.split(/diff --git a\//).slice(1);
 
   for (const fileDiff of fileDiffs) {
     const [filePathLine, ...diffLines] = fileDiff.split('\n');
-    const filePath = filePathLine.split(' b/')[0].trim();
+    const filePath = filePathLine.split(' b/')[1].trim();
 
     const changes = {
-      addedLines: [],
-      removedLines: [],
-      addedKeyValuePairs: new Map(),
-      removedKeyValuePairs: new Map(),
-      keysToDelete: [],
-      keysToUpdate: [],
-      keysToAdd: []
+      // This will hold the added key-value pairs
+      addedKeyValueMap: new Map(),
+      // This will hold the removed key-value pairs
+      removedKeyValueMap: new Map(),
+      // This will hold the key orders in 'git diff'
+      keysOrderInDiff: [],
+      // +, - action orders
+      actionsOrder: []
     };
-
     for (const line of diffLines) {
-
+      //skip the comments
       if (line.trim().startsWith("#") || line.trim().startsWith("!")) {
         continue;
       }
+      
+      if (line.trim().startsWith("@@")) {
+        // Handle the line, eg, @@ -170,6 +192,7 @@ BTN_EDIT=Edit
+        // Extract the string after the second @@
+        const match = line.match(/@@.*?@@\s*(.*)/);
+        if (match[1]) {
+          const [key, value] = match[1].split('=').map(part => part.trim());
+          if (key && value) {
+            changes.keysOrderInDiff.push(key);
+          }
+        }
+        continue;
+      }
       if (line.startsWith('+') && !line.startsWith('+++')) {
+        //add lines
         const addedLine = line.slice(1).trim();
-        changes.addedLines.push(addedLine);
-
         if (addedLine.includes('=') && addedLine.split('=').length === 2) {
           const [key, value] = addedLine.split('=').map(part => part.trim());
           if (key && value) {
-            changes.addedKeyValuePairs.set(key, value);
+            changes.addedKeyValueMap.set(key, value);
+            changes.keysOrderInDiff.push(key);
+            changes.actionsOrder.push({ key: key, action: "+" });
           }
         }
       } else if (line.startsWith('-') && !line.startsWith('---')) {
+        //remove lines
         const removedLine = line.slice(1).trim();
-        changes.removedLines.push(removedLine);
         if (removedLine.includes('=') && removedLine.split('=').length === 2) {
           const [key, value] = removedLine.split('=').map(part => part.trim());
           if (key && value) {
-            changes.removedKeyValuePairs.set(key, value);
+            changes.removedKeyValueMap.set(key, value);
+            changes.actionsOrder.push({ key: key, action: "-" });
           }
+        }
+      } else {
+        if (line.trim().includes('=') && line.trim().split('=').length === 2) {
+          const [key, value] = line.trim().split('=').map(part => part.trim());
+          changes.keysOrderInDiff.push(key);
         }
       }
     }
-
-    changes.removedKeyValuePairs.forEach((value, key) => {
-      if (!changes.addedKeyValuePairs.has(key)) {
-        changes.keysToDelete.push({
-          key: key,
-          value: ''
-        });
-      } else {
-        changes.keysToUpdate.push({
-          key: key,
-          value: changes.addedKeyValuePairs.get(key)
-        });
-      }
-    });
-
-    changes.addedKeyValuePairs.forEach((value, key) => {
-      if (!changes.removedKeyValuePairs.has(key)) {
-        changes.keysToAdd.push({
-          key: key,
-          value: changes.addedKeyValuePairs.get(key)
-        });
-      }
-    });
-
     files.push({ filePath, changes });
   }
+
+  let mapToObject = function (map) {
+    const obj = {};
+    for (const [key, value] of map.entries()) {
+      obj[key] = value;
+    }
+    return obj;
+  };
 
   console.log(
     'Beautified Output:',
@@ -179,8 +183,8 @@ async function handleGitDiff(diffOutput) {
         ...file,
         changes: {
           ...file.changes,
-          addedKeyValuePairs: mapToObject(file.changes.addedKeyValuePairs),
-          removedKeyValuePairs: mapToObject(file.changes.removedKeyValuePairs),
+          addedKeyValueMap: mapToObject(file.changes.addedKeyValueMap),
+          removedKeyValueMap: mapToObject(file.changes.removedKeyValueMap),
         },
       })),
       null,
@@ -196,6 +200,12 @@ async function handleGitDiff(diffOutput) {
 
 
 (async function () {
-  const diffOutput = process.env.DIFF
-  await handleGitDiff(diffOutput)
+  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/1addfile/diff', 'utf-8');
+  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/2removefile/diff', 'utf-8');
+  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/3movefile/diff', 'utf-8');
+  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/4addline/diff', 'utf-8');
+  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/5removeline/diff', 'utf-8');
+  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/6updateline/diff', 'utf-8');
+  const diffOutput = process.env.DIFF;
+  await handleGitDiff(fileContent);
 })()

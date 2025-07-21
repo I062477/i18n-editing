@@ -6,7 +6,7 @@ on:
       - main  # TODO master
 
 jobs:
-  ua-process-translation:
+  prepare-for-ua-review:
     runs-on: ubuntu-latest
 
     steps:
