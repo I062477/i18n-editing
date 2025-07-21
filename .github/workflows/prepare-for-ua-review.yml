@@ -1,14 +1,14 @@
 name: Prepare for UA Review
 
 on:
-  push:
-    branches:
-      - main  # TODO master
+  pull_request:
+    types:
+      - closed
 
 jobs:
   prepare-for-ua-review:
+    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == ‘main’ }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         id: checkout-code
