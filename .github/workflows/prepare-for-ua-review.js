@@ -206,6 +206,6 @@ async function handleGitDiff(diffOutput) {
   //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/4addline/diff', 'utf-8');
   //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/5removeline/diff', 'utf-8');
   //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/6updateline/diff', 'utf-8');
-  const diffOutput = process.env.DIFF;
+  const fileContent = process.env.DIFF;
   await handleGitDiff(fileContent);
 })()
