@@ -10,24 +10,18 @@ jobs:
     if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         id: checkout-code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          
-      - name: Debug Git State
-        run: |
-          git status
-          git log -1
-          git branch
           
       - name: Use Node.js 18.13.0
         uses: actions/setup-node@v4
         with:
           node-version: "18.13.0"
 
-      - name: Get Env for properties
+      - name: Get Diff
         id: get-env
         run: |
           {
@@ -36,17 +30,28 @@ jobs:
              echo EOF
            } >> "$GITHUB_OUTPUT"
 
-
-      - name: Display Env Variables
+      - name: Display Diff
         run: |
           echo "${{env.DIFF}}"
         shell: bash
         env:
           DIFF: ${{ steps.get-env.outputs.DIFF }}
 
-      - name: If NO i18n.properties changes, SKIP
+      - name: Check Condition
+        id: check-condition
         run: |
-          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep 'i18n.properties' || exit 0
+          if [ "$DIFF" == "" ]; then
+            echo "::set-output name=exit_job::true"
+          else
+            echo "::set-output name=exit_job::false"
+          fi
+        env:
+          DIFF: ${{ steps.get-env.outputs.DIFF }}
+
+      - name: Exit Job or NOT
+        if: ${{ steps.check-condition.outputs.exit_job == 'true' }}
+        run: echo "Exiting job early."
+        continue-on-error: true
 
       - name: Prepare for UA Review
         run: node ".github/workflows/prepare-for-ua-review.js"
