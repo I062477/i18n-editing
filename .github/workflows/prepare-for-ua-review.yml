@@ -44,6 +44,10 @@ jobs:
         env:
           DIFF: ${{ steps.get-env.outputs.DIFF }}
 
+      - name: If NO i18n.properties changes, SKIP
+        run: |
+          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep 'i18n.properties' || exit 0
+
       - name: Prepare for UA Review
         run: node ".github/workflows/prepare-for-ua-review.js"
         shell: bash
