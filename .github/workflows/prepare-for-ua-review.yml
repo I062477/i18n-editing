@@ -50,25 +50,30 @@ jobs:
 
       - name: Exit Job or NOT
         if: ${{ steps.check-condition.outputs.exit_job == 'true' }}
-        run: echo "Exiting job early."
-        continue-on-error: true
+        run: |
+          echo "Exiting job early."
+          exit 0
 
       - name: Prepare for UA Review
+        if: ${{ steps.check-condition.outputs.exit_job != 'true' }}
         run: node ".github/workflows/prepare-for-ua-review.js"
         shell: bash
         env:
           DIFF: ${{ steps.get-env.outputs.DIFF }}
  
       - name: Debug Git State
+        if: ${{ steps.check-condition.outputs.exit_job != 'true' }}
         run: |
           git status
           git log -1
           git branch
 
       - name: Debug GitHub Event
+        if: ${{ steps.check-condition.outputs.exit_job != 'true' }}
         run: echo "${{ toJson(github.event) }}"
 
       - name: Create Pull Request
+        if: ${{ steps.check-condition.outputs.exit_job != 'true' }}
         uses: peter-evans/create-pull-request@v5
         with:
           base: main
