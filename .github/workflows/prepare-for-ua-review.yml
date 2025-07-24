@@ -41,9 +41,9 @@ jobs:
         id: check-condition
         run: |
           if [ "$DIFF" == "" ]; then
-            echo "::set-output name=exit_job::true"
+            echo "{exit_job}={true}" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=exit_job::false"
+            echo "{exit_job}={false}" >> $GITHUB_OUTPUT
           fi
         env:
           DIFF: ${{ steps.get-env.outputs.DIFF }}
