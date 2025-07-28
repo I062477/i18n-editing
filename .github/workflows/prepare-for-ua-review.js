@@ -73,7 +73,7 @@ function updatePropFileWithOneAction(filePath, key, action, changes) {
 
   //if the previous key is not found in the file, add it at the end
   if(action === "+" && !added) {
-    updatedLines.push(`${key}=${changes.addedKeyValueMap.get(key)}`);
+    updatedLines.unshift(`${key}=${changes.addedKeyValueMap.get(key)}`);
   }
   fs.writeFileSync(absolutePath, updatedLines.join('\n'), 'utf-8');
 }
