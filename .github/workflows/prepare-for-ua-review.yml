@@ -5,14 +5,6 @@ on:
     types:
       - closed
 
-inputs:
-  enUS:
-    description: |
-      If true, the script will also apply the changes to the en_US i18n.properties file.
-      This is useful for service-cockpit-api, but not for service-eventlog.
-    required: true
-    default: true #TODO true for service-cockpit-api, but false for service-eventlog
-
 jobs:
   prepare-for-ua-review:
     if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && !startsWith(github.event.pull_request.title,'UA Review for Pull Request') }} #TODO master 
@@ -68,7 +60,7 @@ jobs:
         shell: bash
         env:
           DIFF: ${{ steps.get-env.outputs.DIFF }}
-          ENUS: ${{ inputs.enUS }}
+          ENUS: "true" #TODO service-cockpit-api true, service-eventlogs false
  
       - name: Debug Git State
         if: ${{ steps.check-condition.outputs.exit_job != 'true' }}
