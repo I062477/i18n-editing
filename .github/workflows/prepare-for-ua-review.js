@@ -209,6 +209,6 @@ async function handleGitDiff(diffOutput, enUS) {
 
 (async function () {
   const fileContent = process.env.DIFF;
-  const enUS = process.env.EN_US;
+  const enUS = process.env.ENUS;
   await handleGitDiff(fileContent,enUS);
 })()
