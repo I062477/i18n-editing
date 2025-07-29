@@ -95,11 +95,16 @@ function updatePropFileWithChanges(filePath, changes) {
  * 
  * @param {*} diffOutput 
  * the output of 'git diff' command
+ * @param {*} enUS
+ * true if process i18n_en_US.properties file
  */
-async function handleGitDiff(diffOutput) {
+async function handleGitDiff(diffOutput, enUS) {
 
-  console.log(">>>>>>");
+  console.log(">>>>>>diffOutput");
   console.log(diffOutput);
+  console.log("<<<<<<");
+  console.log(">>>>>>enUS");
+  console.log(enUS);
   console.log("<<<<<<");
 
   const files = [];
@@ -194,18 +199,16 @@ async function handleGitDiff(diffOutput) {
 
   files.forEach(file => {
     updatePropFileWithChanges(String(file.filePath).replace("i18n.properties", "i18n_en.properties"), file.changes);
+    if(enUS){
+      updatePropFileWithChanges(String(file.filePath).replace("i18n.properties", "i18n_en_US.properties"), file.changes);
+    }
   });
 
 }
 
 
 (async function () {
-  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/1addfile/diff', 'utf-8');
-  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/2removefile/diff', 'utf-8');
-  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/3movefile/diff', 'utf-8');
-  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/4addline/diff', 'utf-8');
-  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/5removeline/diff', 'utf-8');
-  //const fileContent = fs.readFileSync('/Users/I062477/Working/git/i18n-editing/.github/workflows/res/6updateline/diff', 'utf-8');
   const fileContent = process.env.DIFF;
-  await handleGitDiff(fileContent);
+  const enUS = process.env.EN_US;
+  await handleGitDiff(fileContent,enUS);
 })()
