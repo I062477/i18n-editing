@@ -199,7 +199,7 @@ async function handleGitDiff(diffOutput, enUS) {
 
   files.forEach(file => {
     updatePropFileWithChanges(String(file.filePath).replace("i18n.properties", "i18n_en.properties"), file.changes);
-    if(enUS){
+    if(enUS === "true") {
       updatePropFileWithChanges(String(file.filePath).replace("i18n.properties", "i18n_en_US.properties"), file.changes);
     }
   });
