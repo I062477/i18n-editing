@@ -6,7 +6,10 @@ on:
       - closed
 
 inputs:
-  en_US:
+  enUS:
+    description: |
+      If true, the script will also apply the changes to the en_US i18n.properties file.
+      This is useful for service-cockpit-api, but not for service-eventlog.
     required: true
     default: true #TODO true for service-cockpit-api, but false for service-eventlog
 
@@ -65,7 +68,7 @@ jobs:
         shell: bash
         env:
           DIFF: ${{ steps.get-env.outputs.DIFF }}
-          EN_US: ${{ inputs.en_US }}
+          ENUS: ${{ inputs.enUS }}
  
       - name: Debug Git State
         if: ${{ steps.check-condition.outputs.exit_job != 'true' }}
