@@ -1,4 +1,3 @@
 .github/workflows/node_modules
-.github/workflows/i18n
 .github/workflows/package-lock.json
 .github/workflows/package.json
