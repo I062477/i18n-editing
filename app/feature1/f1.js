@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-
+//add comment here
 function parseProperties(filePath) {
   const lines = fs.readFileSync(filePath, 'utf-8').split('\n');
   const properties = {};
