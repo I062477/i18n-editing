@@ -7,7 +7,9 @@ on:
 
 jobs:
   prepare-for-ua-review:
-    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && !startsWith(github.event.pull_request.title,'UA Review for Pull Request') }} #TODO master 
+    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && !startsWith(github.event.pull_request.title,'UA Review for Pull Request') }} #TODO master
     runs-on: ubuntu-latest
     steps:
       - uses: I062477/language-review-action@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
