@@ -13,3 +13,4 @@ jobs:
       - uses: I062477/language-review-action@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          us: 'true'
